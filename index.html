@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AETHER Weather — Professional 3D glassmorphism weather experience">
-    <title>AETHER Weather</title>
+    <title>AETHER Weather | Master Edition</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffcc33">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
@@ -15,6 +17,8 @@
 
 <!-- Ambient Background Canvas -->
 <canvas id="bgCanvas" class="bg-canvas"></canvas>
+<canvas id="fxCanvas"></canvas>
+<div class="frost-overlay"></div>
 
 <div class="app-container">
 
@@ -23,6 +27,12 @@
         
         <!-- Alerts Area -->
         <div id="alertsContainer" class="alerts-container"></div>
+
+        <!-- AI Narrative -->
+        <div class="narrative-box glass-3d" id="narrativeBox">
+            <i class='bx bxs-magic-wand magic-ico'></i>
+            <p id="narrativeText">Select a city to generate your morning briefing...</p>
+        </div>
 
         <!-- Search -->
         <div class="search-wrap">
@@ -37,14 +47,21 @@
                 <span class="s-label"><i class='bx bx-moon'></i> Theme</span>
                 <label class="switch">
                     <input type="checkbox" id="themeToggle">
-                    <span class="slider"></span>
+                    <span class="slider round"></span>
                 </label>
             </div>
             <div class="gravity-toggle-wrap">
-                <span class="s-label"><i class='bx bx-down-arrow-alt'></i> Gravity Mode</span>
+                <span class="s-label"><i class='bx bx-tachometer'></i> Units (°F)</span>
+                <label class="switch">
+                    <input type="checkbox" id="unitToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="gravity-toggle-wrap">
+                <span class="s-label"><i class='bx bx-cube-alt'></i> Gravity</span>
                 <label class="switch">
                     <input type="checkbox" id="gravityToggle">
-                    <span class="slider"></span>
+                    <span class="slider round"></span>
                 </label>
             </div>
             <div id="searchResults" class="search-results hidden"></div>
@@ -167,6 +184,22 @@
                         </div>
                     </div>
                 </div>
+                <!-- Pollen Card -->
+                <div class="stat-card glass-3d tilt-card pollen-card">
+                    <div class="p-header"><i class='bx bx-leaf'></i> Pollen Levels</div>
+                    <div class="p-grid" id="pollenGrid">
+                        <div class="p-item"><span>Grass</span><b id="p-grass">--</b></div>
+                        <div class="p-item"><span>Tree</span><b id="p-tree">--</b></div>
+                        <div class="p-item"><span>Weed</span><b id="p-weed">--</b></div>
+                    </div>
+                </div>
+                <!-- Activity Score Card -->
+                <div class="stat-card glass-3d tilt-card activity-card">
+                    <div class="a-header">Smart Outing Score</div>
+                    <div class="a-list" id="activityList">
+                        <!-- Injected -->
+                    </div>
+                </div>
             </div>
 
             <!-- Instruments Row: Compass + Sun Arc -->
@@ -196,6 +229,39 @@
                     <p id="moonIllum" class="moon-illum">-- % illuminated</p>
                 </div>
             </div>
+
+            <!-- ═══ AI CHATBOT ═══ -->
+    <div class="chat-wrapper" id="chatWrapper">
+        <button id="chatToggle" class="chat-fab">
+            <i class='bx bx-bot'></i>
+            <span class="chat-badge">AI</span>
+        </button>
+        
+        <div class="chat-window glass-3d" id="chatWindow">
+            <div class="chat-header">
+                <div class="chat-status">
+                    <i class='bx bxs-magic-wand'></i>
+                    <span>AETHER Oracle</span>
+                    <div class="status-dot"></div>
+                </div>
+                <button id="closeChat"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="msg bot">Hello! I am the AETHER Oracle. Ask me anything about today's weather!</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off">
+                <button id="sendChat"><i class='bx bxs-send'></i></button>
+            </div>
+        </div>
+    </div>
+
+            <!-- Scripts -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 
             <!-- Alerts -->
             <div id="alertsContainer" class="alerts-wrap hidden"></div>

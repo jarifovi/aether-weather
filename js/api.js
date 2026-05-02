@@ -16,16 +16,20 @@ class WeatherAPI {
         } catch { return []; }
     }
 
-    async getWeatherData(lat, lon) {
+    async getWeatherData(lat, lon, useImperial = false) {
         if (this.API_KEY) return this.getPremiumWeatherData(lat, lon);
         try {
+            const unit = useImperial ? 'fahrenheit' : 'celsius';
+            const sUnit = useImperial ? 'mph' : 'kmh';
             const p = new URLSearchParams({
                 latitude: lat, longitude: lon,
                 current: 'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,visibility',
                 hourly:  'temperature_2m,precipitation_probability,weather_code',
                 daily:   'weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum,sunrise,sunset',
                 forecast_days: 7,
-                timezone: 'auto'
+                timezone: 'auto',
+                temperature_unit: unit,
+                wind_speed_unit: sUnit
             });
             const r = await fetch(`${this.weatherUrl}?${p}`);
             if (!r.ok) throw new Error();
@@ -266,5 +270,47 @@ class WeatherAPI {
         if (w > 40) s -= 20; else if (w > 25) s -= 10;
         if (uv >= 8) s -= 20; else if (uv >= 6) s -= 10;
         return Math.max(0, Math.min(100, Math.round(s)));
+    }
+
+    async getPollenData(lat, lon) {
+        try {
+            const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto`;
+            const r = await fetch(url);
+            if (!r.ok) return null;
+            return (await r.json()).current;
+        } catch { return null; }
+    }
+
+    generateNarrative(cur, daily, name) {
+        const t = cur.temperature_2m;
+        const code = cur.weather_code;
+        const info = this.getWeatherInfo(code);
+        
+        let msg = `Good morning! It's currently ${t}°C with ${info.desc.toLowerCase()} in ${name}. `;
+        
+        if (code >= 61) msg += "Keep your umbrella close as rain is expected. ";
+        else if (t >= 30) msg += "It's a hot one! Stay hydrated if you're heading out. ";
+        else if (t >= 20) msg += "The weather is looking beautiful for outdoor plans. ";
+        
+        const maxT = daily.temperature_2m_max[0];
+        msg += `Expect a high of ${maxT}°C today.`;
+        
+        return msg;
+    }
+
+    getActivityScores(cur, daily) {
+        const t = cur.temperature_2m;
+        const precip = cur.precipitation;
+        const uv = daily.uv_index_max[0];
+        
+        let photo = 10; if (precip > 0) photo -= 7; if (uv > 8) photo -= 2;
+        let run = 10; if (t > 30) run -= 5; if (precip > 0.5) run -= 4;
+        let star = 10; if (cur.weather_code > 2) star -= 8;
+        
+        return [
+            { label: 'Photography', score: Math.max(1, photo), icon: 'bx-camera' },
+            { label: 'Running', score: Math.max(1, run), icon: 'bx-run' },
+            { label: 'Stargazing', score: Math.max(1, star), icon: 'bx-star' }
+        ];
     }
 }

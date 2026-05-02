@@ -3,18 +3,31 @@ class ParticleSystem {
     constructor() {
         this.canvas = document.getElementById('bgCanvas');
         this.ctx = this.canvas.getContext('2d');
+        this.fxCanvas = document.getElementById('fxCanvas');
+        this.fxCtx = this.fxCanvas.getContext('2d');
+        
         this.stars = [];
         this.orbs = [];
         this.weatherParticles = [];
+        this.glassDrops = []; 
         this.currentWeather = 'clear';
         this.isGravityMode = false;
         this.baseColor = '#020617';
         this.targetColor = '#020617';
         
+        this.isMobile = window.innerWidth < 768;
+        this.starCount = this.isMobile ? 80 : 200;
+        this.orbCount = this.isMobile ? 3 : 6;
+        this.dropCount = this.isMobile ? 15 : 40;
+        
         this.resize();
-        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('resize', () => {
+            this.resize();
+            this.isMobile = window.innerWidth < 768;
+        });
         this.initStars();
         this.initOrbs();
+        this.initGlass();
         this.raf = requestAnimationFrame(() => this.loop());
         
         // Mouse gravity well
@@ -28,6 +41,10 @@ class ParticleSystem {
     resize() {
         this.canvas.width  = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        if (this.fxCanvas) {
+            this.fxCanvas.width = window.innerWidth;
+            this.fxCanvas.height = window.innerHeight;
+        }
     }
 
     setGravityMode(enabled) {
@@ -39,9 +56,21 @@ class ParticleSystem {
         });
     }
 
+    initGlass() {
+        this.glassDrops = [];
+        for (let i = 0; i < this.dropCount; i++) {
+            this.glassDrops.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                r: Math.random() * 2 + 2,
+                speed: Math.random() * 0.5 + 0.2
+            });
+        }
+    }
+
     initStars() {
         this.stars = [];
-        for (let i = 0; i < 200; i++) {
+        for (let i = 0; i < this.starCount; i++) {
             this.stars.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
@@ -59,7 +88,7 @@ class ParticleSystem {
     initOrbs() {
         this.orbs = [];
         const colors = ['255,204,51', '16,185,129', '124,58,237', '249,115,22'];
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < this.orbCount; i++) {
             this.orbs.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
@@ -215,6 +244,22 @@ class ParticleSystem {
                 if (p.y > this.canvas.height) { p.y = -p.r; p.x = Math.random() * this.canvas.width; }
             }
         });
+
+        // Glass FX: Window Drops
+        if (this.currentWeather === 'rain') {
+            this.fxCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.glassDrops.forEach(d => {
+                this.fxCtx.beginPath();
+                this.fxCtx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                this.fxCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                this.fxCtx.fill();
+                
+                d.y += d.speed;
+                if (d.y > this.canvas.height) d.y = -10;
+            });
+        } else {
+            this.fxCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
 
         this.raf = requestAnimationFrame(() => this.loop());
     }

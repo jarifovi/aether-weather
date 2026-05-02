@@ -1,0 +1,17 @@
+{
+  "name": "AETHER Weather",
+  "short_name": "AETHER",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#ffcc33",
+  "description": "Premium 3D Gravity Weather Station",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/252/252035.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

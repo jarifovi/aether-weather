@@ -58,6 +58,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSoundOn       = false;
     let currentAudio    = null;
 
+    // ── Temperature-Based Themes ──────────────────────────
+    function updateDynamicTheme(temp) {
+        let hue = 220; // Default blue
+        if (temp >= 35)      hue = 15;  // Red-Orange
+        else if (temp >= 28) hue = 35;  // Orange
+        else if (temp >= 15) hue = 160; // Teal/Green
+        else if (temp < 5)   hue = 200; // Ice Blue
+        
+        document.documentElement.style.setProperty('--primary', `hsl(${hue}, 100%, 60%)`);
+        document.documentElement.style.setProperty('--primary-dim', `hsla(${hue}, 100%, 60%, 0.2)`);
+    }
+
     // ── Theme Toggle ─────────────────────────────────────
     themeToggle.addEventListener('change', () => {
         const isLight = themeToggle.checked;
@@ -376,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         locationNameEl.textContent = name;
         tempEl.textContent = '--';
 
-        const data = await api.getWeatherData(lat, lon);
+        const data = await api.getWeatherData(lat, lon, useImperial);
         if (!data) { alert('Failed to fetch weather data.'); return; }
 
         // Fetch AQI
@@ -403,8 +415,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof particles !== 'undefined') particles.setWeather(cur.weather_code);
 
         // Hero card
-        tempEl.textContent  = Math.round(cur.temperature_2m);
-        feelsEl.textContent = Math.round(cur.apparent_temperature);
+        const unitS = useImperial ? '°F' : '°C';
+        tempEl.innerHTML  = `${Math.round(cur.temperature_2m)}<span class="unit-main">${unitS}</span>`;
+        feelsEl.textContent = `${Math.round(cur.apparent_temperature)} ${unitS}`;
         descEl.textContent  = wi.desc;
         mainIconEl.className = `bx ${wi.icon} w-icon-main`;
         mainIconEl.style.color = wi.color;
@@ -420,8 +433,9 @@ document.addEventListener('DOMContentLoaded', () => {
         clothAdviceEl.textContent = api.getClothingAdvice(cur.temperature_2m, cur.precipitation);
 
         // Stats
+        const speedUnit = useImperial ? 'mph' : 'km/h';
         precipEl.textContent   = `${cur.precipitation} mm`;
-        windEl.textContent     = `${cur.wind_speed_10m} km/h`;
+        windEl.textContent     = `${cur.wind_speed_10m} ${speedUnit}`;
         humEl.textContent      = `${cur.relative_humidity_2m}%`;
         pressureEl.textContent = `${Math.round(cur.surface_pressure)} hPa`;
         visEl.textContent      = cur.visibility >= 1000
@@ -445,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dir = cur.wind_direction_10m ?? 0;
         drawCompass(dir);
         windDirEl.textContent = `${api.degToCompass(dir)} (${dir}°)`;
-        gustEl.textContent    = `Gusts: ${cur.wind_gusts_10m ?? '--'} km/h`;
+        gustEl.textContent    = `Gusts: ${cur.wind_gusts_10m ?? '--'} ${speedUnit}`;
 
         // Sun arc
         if (daily.sunrise?.[0] && daily.sunset?.[0]) {
@@ -647,11 +661,49 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('stargazing').textContent = astro.stargazing;
     }
 
+    // ── AI Narrative ──────────────────────────────────────
+    function updateNarrative(cur, daily, name) {
+        const text = api.generateNarrative(cur, daily, name);
+        document.getElementById('narrativeText').textContent = text;
+    }
+
+    // ── Activity Scores ───────────────────────────────────
+    function renderActivities(cur, daily) {
+        const scores = api.getActivityScores(cur, daily);
+        const list = document.getElementById('activityList');
+        list.innerHTML = '';
+        scores.forEach(s => {
+            const row = document.createElement('div');
+            row.className = 'a-row';
+            row.innerHTML = `
+                <i class='bx ${s.icon} a-icon'></i>
+                <div class="a-bar-wrap"><div class="a-bar" style="width:${s.score*10}%"></div></div>
+                <span class="a-score">${s.score}</span>
+            `;
+            list.appendChild(row);
+        });
+    }
+
+    // ── Pollen ────────────────────────────────────────────
+    async function updatePollen(lat, lon) {
+        const data = await api.getPollenData(lat, lon);
+        if (!data) return;
+        document.getElementById('p-grass').textContent = Math.round(data.grass_pollen || 0);
+        document.getElementById('p-tree').textContent = Math.round(data.birch_pollen || data.alder_pollen || 0);
+        document.getElementById('p-weed').textContent = Math.round(data.mugwort_pollen || data.ragweed_pollen || 0);
+    }
+
     // Update loadWeather to call these
     const originalLoadWeather = loadWeather;
     loadWeather = async (lat, lon, name) => {
         const data = await originalLoadWeather(lat, lon, name);
         if (data) {
+            window.lastWeatherData = data; // For Chatbot context
+            updateDynamicTheme(data.current.temperature_2m);
+            updateNarrative(data.current, data.daily, name);
+            renderActivities(data.current, data.daily);
+            updatePollen(lat, lon);
+            
             const alerts = api.buildAlerts(data.current, data.daily);
             renderAlerts(alerts);
             renderSkyView(lat, lon);
@@ -661,3 +713,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 });
+
+
+// -- Master FX: Chrono-Gradient Logic ------------------
+function updateChronoGradient() {
+    const hour = new Date().getHours();
+    let g1, g2;
+
+    if (hour >= 5 && hour < 8) { // Dawn
+        g1 = '#2e1065'; g2 = '#fb7185';
+    } else if (hour >= 8 && hour < 17) { // Day
+        g1 = '#0f172a'; g2 = '#1e293b';
+    } else if (hour >= 17 && hour < 20) { // Sunset
+        g1 = '#4c1d95'; g2 = '#f59e0b';
+    } else { // Night
+        g1 = '#020617'; g2 = '#0f172a';
+    }
+
+    document.body.style.background = \linear-gradient(135deg, \ 0%, \ 100%)\;
+}
+
+// Update every minute
+updateChronoGradient();
+setInterval(updateChronoGradient, 60000);
+
+
+
+// -- Unit Switch Logic ---------------------------------
+const unitToggle = document.getElementById('unitToggle');
+let useImperial = false;
+
+unitToggle.addEventListener('change', () => {
+    useImperial = unitToggle.checked;
+    // Re-render everything with new units
+    if (window.lastWeatherData) {
+        const data = window.lastWeatherData;
+        const city = weatherPanel.dataset.lastCity;
+        // Re-trigger loadWeather with same coords but new global unit state
+        loadWeather(data.latitude, data.longitude, city);
+    }
+});
+
+function convertTemp(c) {
+    return useImperial ? Math.round((c * 9/5) + 32) : Math.round(c);
+}
+
+function convertSpeed(kmh) {
+    return useImperial ? Math.round(kmh * 0.621371) : Math.round(kmh);
+}
+
