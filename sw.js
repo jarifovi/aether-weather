@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aether-v1';
+const CACHE_NAME = 'jarif-ovi-v1';
 const ASSETS = [
   './',
   './index.html',

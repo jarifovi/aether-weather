@@ -1,6 +1,6 @@
 {
-  "name": "AETHER Weather",
-  "short_name": "AETHER",
+  "name": "Jarif Ovi Live Weather",
+  "short_name": "Jarif Ovi",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#020617",
