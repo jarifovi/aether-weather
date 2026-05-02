@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const forecastBarInner = document.getElementById('forecastBarInner');
     const gravityToggle  = document.getElementById('gravityToggle');
     const themeToggle    = document.getElementById('themeToggle');
+    const soundToggle    = document.getElementById('soundToggle');
+    const saveCityBtn    = document.getElementById('saveCityBtn');
     const sidebar        = document.getElementById('sidebar');
 
     // Weather display
@@ -53,6 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let dailyData       = null;
     let hourlyData      = null;
     let activeTab       = 'temp';
+    let isSoundOn       = false;
+    let currentAudio    = null;
 
     // ── Theme Toggle ─────────────────────────────────────
     themeToggle.addEventListener('change', () => {
@@ -573,10 +577,87 @@ document.addEventListener('DOMContentLoaded', () => {
         heatmapBtn.classList.toggle('active', heatmapOn);
     });
 
-    // ── Radar ─────────────────────────────────────────────
-    radarBtn.addEventListener('click', () => {
-        radarOn = !radarOn;
-        map.toggleRadar(radarOn);
-        radarBtn.classList.toggle('active', radarOn);
+    // ── Soundscape ────────────────────────────────────────
+    function playAmbience(code) {
+        if (!isSoundOn) return;
+        if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+        
+        let file = '';
+        if (code >= 95) file = 'https://www.soundjay.com/nature/thunderstorm-01.mp3';
+        else if (code >= 61) file = 'https://www.soundjay.com/nature/rain-07.mp3';
+        else if (code <= 2) file = 'https://www.soundjay.com/nature/birds-chirping-01.mp3';
+        
+        if (file) {
+            currentAudio = new Audio(file);
+            currentAudio.loop = true;
+            currentAudio.play().catch(() => console.log('Audio blocked.'));
+        }
+    }
+
+    soundToggle.addEventListener('click', () => {
+        isSoundOn = !isSoundOn;
+        soundToggle.classList.toggle('active', isSoundOn);
+        soundToggle.innerHTML = isSoundOn ? "<i class='bx bx-volume-full'></i>" : "<i class='bx bx-volume-mute'></i>";
+        if (isSoundOn) {
+            const data = weatherPanel.dataset.lastCode;
+            if (data) playAmbience(parseInt(data));
+        } else if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
     });
+
+    // ── Save City ─────────────────────────────────────────
+    saveCityBtn.addEventListener('click', () => {
+        const city = weatherPanel.dataset.lastCity;
+        if (!city) return;
+        let favs = JSON.parse(localStorage.getItem('favCities') || '[]');
+        if (!favs.includes(city)) {
+            favs.push(city);
+            localStorage.setItem('favCities', JSON.stringify(favs));
+            alert(`${city} saved to favorites!`);
+        }
+    });
+
+    // ── Alerts ────────────────────────────────────────────
+    function renderAlerts(alerts) {
+        const container = document.getElementById('alertsContainer');
+        container.innerHTML = '';
+        alerts.forEach(a => {
+            const el = document.createElement('div');
+            el.className = `alert-banner ${a.type}`;
+            el.innerHTML = `
+                <i class='bx ${a.icon}'></i>
+                <div class="alert-content">
+                    <h4>${a.msg}</h4>
+                    <p>${a.advice}</p>
+                </div>
+            `;
+            container.appendChild(el);
+        });
+    }
+
+    // ── Sky View ──────────────────────────────────────────
+    function renderSkyView(lat, lon) {
+        const astro = api.getAstroData(lat, lon);
+        document.getElementById('moonIcon').className = `bx ${astro.moonIcon} sky-ico`;
+        document.getElementById('moonPhase').textContent = astro.moonPhase;
+        document.getElementById('moonIllum').textContent = `${astro.moonIllum}% Illumination`;
+        document.getElementById('goldenHour').textContent = astro.goldenHour;
+        document.getElementById('stargazing').textContent = astro.stargazing;
+    }
+
+    // Update loadWeather to call these
+    const originalLoadWeather = loadWeather;
+    loadWeather = async (lat, lon, name) => {
+        const data = await originalLoadWeather(lat, lon, name);
+        if (data) {
+            const alerts = api.buildAlerts(data.current, data.daily);
+            renderAlerts(alerts);
+            renderSkyView(lat, lon);
+            weatherPanel.dataset.lastCode = data.current.weather_code;
+            weatherPanel.dataset.lastCity = name;
+            if (isSoundOn) playAmbience(data.current.weather_code);
+        }
+    };
 });

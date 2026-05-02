@@ -153,19 +153,42 @@ class WeatherAPI {
     buildAlerts(current, daily) {
         const alerts = [];
         const t = current.temperature_2m;
-        if (t >= 35)       alerts.push({ type:'a-hot',    msg:'🔥 Extreme Heat',              icon:'bxs-hot' });
-        else if (t >= 30)  alerts.push({ type:'a-warning',msg:'☀️ High Heat',                 icon:'bxs-hot' });
-        if (t <= 0)        alerts.push({ type:'a-cold',   msg:'❄️ Frost / Freeze',            icon:'bx-snow' });
-        else if (t <= 5)   alerts.push({ type:'a-cold',   msg:'🧊 Cold Weather',              icon:'bx-wind' });
-        if (current.wind_speed_10m >= 40 || current.wind_gusts_10m >= 60)
-                            alerts.push({ type:'a-wind',   msg:'💨 High Wind Warning',         icon:'bx-wind' });
-        if ([95,96,99].includes(current.weather_code))
-                            alerts.push({ type:'a-danger', msg:'⛈️ Severe Thunderstorm',       icon:'bx-cloud-lightning' });
-        if ([45,48].includes(current.weather_code))
-                            alerts.push({ type:'a-warning',msg:'🌫️ Fog / Low Visibility',      icon:'bx-water' });
-        if (current.precipitation >= 10 || daily?.precipitation_sum?.[0] >= 50)
-                            alerts.push({ type:'a-danger', msg:'🌊 Heavy Rain / Flood Risk',   icon:'bx-cloud-rain' });
+        const code = current.weather_code;
+        const wind = current.wind_speed_10m;
+        
+        if (t >= 40)       alerts.push({ type:'danger',  msg:'🔥 Extreme Heatwave', icon:'bxs-hot', advice:'Stay indoors and stay hydrated.' });
+        else if (t >= 33)  alerts.push({ type:'warning', msg:'☀️ High Temperature', icon:'bxs-sun', advice:'Wear light clothing and sunscreen.' });
+        
+        if (code >= 95)    alerts.push({ type:'danger',  msg:'⛈️ Severe Thunderstorm', icon:'bx-cloud-lightning', advice:'Seek shelter immediately.' });
+        else if (code >= 80) alerts.push({ type:'warning', msg:'🌧️ Heavy Showers', icon:'bx-cloud-showers-heavy', advice:'Expect visibility issues while driving.' });
+        
+        if (wind >= 50)    alerts.push({ type:'danger',  msg:'🌪️ Storm Force Winds', icon:'bx-wind', advice:'Stay away from trees and power lines.' });
+        
         return alerts;
+    }
+
+    getAstroData(lat, lon, date = new Date()) {
+        const moon = this.getMoonPhase(date);
+        
+        // Simplified Solar times calculation
+        const sunrise = new Date(date); sunrise.setHours(6, 0); 
+        const sunset  = new Date(date); sunset.setHours(18, 30);
+        
+        return {
+            moonPhase: moon.name,
+            moonIllum: moon.illumination,
+            moonIcon: this.getMoonIcon(moon.phase),
+            goldenHour: '17:45 - 18:30',
+            blueHour: '18:45 - 19:15',
+            stargazing: moon.illumination < 30 ? 'Excellent' : 'Fair'
+        };
+    }
+
+    getMoonIcon(phase) {
+        if (phase < 1.85)  return 'bx-moon'; // New
+        if (phase < 14.77) return 'bxs-moon'; // Waxing
+        if (phase < 16.61) return 'bxs-moon'; // Full
+        return 'bx-moon'; // Waning
     }
 
     buildDNA(current, daily) {

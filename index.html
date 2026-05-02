@@ -20,6 +20,9 @@
 
     <!-- ═══ SIDEBAR ═══ -->
     <aside class="sidebar" id="sidebar">
+        
+        <!-- Alerts Area -->
+        <div id="alertsContainer" class="alerts-container"></div>
 
         <!-- Search -->
         <div class="search-wrap">
@@ -74,8 +77,14 @@
                         <i class='bx bx-sun'></i><span id="dayNightLabel">Day</span>
                     </div>
                 </div>
-                <div class="hero-mid">
-                    <div class="w-icon-wrap">
+                <div class="header-right">
+                    <button id="saveCityBtn" class="head-btn" title="Save City">
+                        <i class='bx bx-bookmark'></i>
+                    </button>
+                    <button id="soundToggle" class="head-btn" title="Toggle Ambience">
+                        <i class='bx bx-volume-mute'></i>
+                    </button>
+                    <div class="clock-wrap">
                         <i id="mainWeatherIcon" class="bx bx-sun w-icon-main"></i>
                         <div class="icon-halo"></div>
                     </div>
@@ -137,6 +146,26 @@
                 <div class="stat-card glass-3d tilt-card aqi-stat-card">
                     <i class='bx bx-wind stat-ico' id="aqiIco"></i>
                     <div><span class="s-label">Air Quality</span><span id="aqiVal" class="s-val">--</span></div>
+                </div>
+                <!-- Sky View Card -->
+                <div class="stat-card glass-3d tilt-card sky-stat-card">
+                    <div class="sky-main">
+                        <i id="moonIcon" class='bx bx-moon sky-ico'></i>
+                        <div class="sky-info">
+                            <span id="moonPhase" class="sky-phase">Moon Phase</span>
+                            <span id="moonIllum" class="sky-illum">--% Illumination</span>
+                        </div>
+                    </div>
+                    <div class="sky-details">
+                        <div class="sky-det-item">
+                            <i class='bx bxs-camera'></i>
+                            <span>Golden: <b id="goldenHour">--</b></span>
+                        </div>
+                        <div class="sky-det-item">
+                            <i class='bx bx-star'></i>
+                            <span>Stargazing: <b id="stargazing">--</b></span>
+                        </div>
+                    </div>
                 </div>
             </div>
 

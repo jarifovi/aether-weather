@@ -774,3 +774,127 @@ input:checked + .slider:before { transform: translateX(20px); }
 .aqi-stat-card {
     background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, transparent 100%);
 }
+
+/* -- Alerts ---------------------------------------------- */
+.alerts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.alert-banner {
+    padding: 1rem;
+    border-radius: 16px;
+    background: rgba(244, 63, 94, 0.15);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    animation: alertSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 8px 32px rgba(244, 63, 94, 0.1);
+}
+
+.alert-banner.warning {
+    background: rgba(251, 146, 60, 0.15);
+    border-color: rgba(251, 146, 60, 0.3);
+}
+
+.alert-banner i {
+    font-size: 1.5rem;
+}
+
+.alert-content h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.alert-content p {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    line-height: 1.4;
+}
+
+@keyframes alertSlide {
+    from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* -- Sky View Card -------------------------------------- */
+.sky-stat-card {
+    grid-column: span 2;
+    background: linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%);
+    display: flex;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem !important;
+}
+
+.sky-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.sky-ico {
+    font-size: 2.5rem;
+    color: #ffcc33;
+}
+
+.sky-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sky-phase {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.sky-illum {
+    font-size: 0.75rem;
+    opacity: 0.6;
+}
+
+.sky-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-left: 1px solid rgba(255,255,255,0.1);
+    padding-left: 1.5rem;
+}
+
+.sky-det-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* -- Header Buttons ------------------------------------- */
+.head-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.head-btn:hover {
+    background: rgba(255,204,51,0.1);
+    border-color: #ffcc33;
+    transform: translateY(-2px);
+}
+
+.head-btn.active {
+    background: #ffcc33;
+    color: #020617;
+}
