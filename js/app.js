@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const soundToggle    = document.getElementById('soundToggle');
     const saveCityBtn    = document.getElementById('saveCityBtn');
     const sidebar        = document.getElementById('sidebar');
+    const mapToggleBtn   = document.getElementById('mapToggleBtn');
+    const mainArea       = document.querySelector('.main-area');
 
     // Weather display
     const locationNameEl = document.getElementById('locationName');
@@ -691,6 +693,22 @@ document.addEventListener('DOMContentLoaded', () => {
         map.toggleRadar(radarOn);
         radarBtn.classList.toggle('active', radarOn);
     });
+
+    // ── Mobile Map Toggle ─────────────────────────────────
+    if (mapToggleBtn && mainArea) {
+        mapToggleBtn.addEventListener('click', () => {
+            mainArea.classList.toggle('map-open');
+            mapToggleBtn.classList.toggle('map-open');
+            const icon = mapToggleBtn.querySelector('i');
+            if (mainArea.classList.contains('map-open')) {
+                icon.className = 'bx bx-x';
+                // Trigger map resize since it was hidden
+                setTimeout(() => map.map.invalidateSize(), 300);
+            } else {
+                icon.className = 'bx bx-map-alt';
+            }
+        });
+    }
 
     // ── Soundscape ────────────────────────────────────────
     function playAmbience(code) {

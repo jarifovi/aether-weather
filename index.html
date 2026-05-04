@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Jarif Ovi Live Weather — Professional 3D glassmorphism weather experience">
     <title>Jarif Ovi Live Weather</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffcc33">
     <link
@@ -246,13 +248,13 @@
                         <div class="chat-header">
                             <div class="chat-status">
                                 <i class='bx bxs-magic-wand'></i>
-                                <span>Jarif Ovi Oracle</span>
+                                <span>Jarif Ovi </span>
                                 <div class="status-dot"></div>
                             </div>
                             <button id="closeChat"><i class='bx bx-x'></i></button>
                         </div>
                         <div class="chat-messages" id="chatMessages">
-                            <div class="msg bot">Hello! I am the Jarif Ovi Oracle. Ask me anything about today's
+                            <div class="msg bot">Hello! I am the Jarif Ovi Live Weather. Ask me anything about today's
                                 weather!</div>
                         </div>
                         <div class="chat-input-area">
@@ -292,39 +294,23 @@
 
             <!-- Developer Contact Section -->
             <div class="developer-section glass-3d">
-                <h3 class="dev-title"><i class='bx bx-code-alt'></i> Developer Info</h3>
+                <h3 class="dev-title"><i class='bx bx-code-alt'></i> Md. Jarif Ovi</h3>
 
                 <div class="dev-info-grid">
                     <div class="dev-info-item">
                         <i class='bx bxs-graduation'></i>
-                        <span>B.Sc in Software Engineering</span>
+                        <span>B.Sc in Computer Science & Engineering</span>
                     </div>
                     <div class="dev-info-item">
                         <i class='bx bx-envelope'></i>
-                        <span>hello@jarifovi.com</span>
+                        <span>jarifovi7@gmail.com</span>
                     </div>
                     <div class="dev-info-item">
-                        <i class='bx bx-globe'></i>
-                        <span>Dhaka, Bangladesh</span>
+                        <i class='bx bx-phone'></i>
+                        <span>01880275244</span>
                     </div>
                 </div>
 
-                <form class="contact-form"
-                    onsubmit="event.preventDefault(); alert('Thank you for getting in touch! I will respond shortly.');">
-                    <h4>Get in Touch</h4>
-                    <div class="form-group">
-                        <input type="text" placeholder="Name" required class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <input type="email" placeholder="Email" required class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <textarea placeholder="Message" rows="3" required class="form-input"></textarea>
-                    </div>
-                    <button type="submit" class="form-submit-btn">
-                        <i class='bx bx-send'></i> Send Message
-                    </button>
-                </form>
 
                 <div class="dev-footer">
                     &copy; 2026 Md. Jariful Abedin Ovi. All rights reserved.
@@ -352,6 +338,11 @@
                     <!-- injected by JS -->
                 </div>
             </div>
+
+            <!-- Mobile Map Toggle -->
+            <button id="mapToggleBtn" class="map-toggle-btn" title="Toggle Map">
+                <i class='bx bx-map-alt'></i>
+            </button>
         </main>
 
     </div><!-- /app-container -->
@@ -359,10 +350,10 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <script src="./js/api.js?v=3"></script>
-    <script src="./js/map.js?v=3"></script>
-    <script src="./js/particles.js?v=3"></script>
-    <script src="./js/app.js?v=3"></script>
+    <script src="./js/api.js?v=4"></script>
+    <script src="./js/map.js?v=4"></script>
+    <script src="./js/particles.js?v=4"></script>
+    <script src="./js/app.js?v=4"></script>
 </body>
 
 </html>
