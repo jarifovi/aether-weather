@@ -329,6 +329,43 @@ body.light-mode .instr-card {
     margin-bottom: 1rem;
 }
 
+/* ── Hero Right Section (buttons + icon + temp) ─────── */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.clock-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+}
+
+.temp-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+/* Unit label injected by JS inside temp-num */
+.unit-main {
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--muted);
+    -webkit-text-fill-color: var(--muted);
+    margin-left: 0.15rem;
+    align-self: flex-start;
+    margin-top: 0.6rem;
+    display: inline-block;
+}
+
+
 .w-icon-wrap {
     position: relative;
     display: flex;
@@ -574,6 +611,7 @@ body.light-mode .instr-card {
 
 .ctab:hover { background: rgba(0,212,255,0.07); color: var(--white); }
 
+.ctab.active {
     background: var(--primary);
     color: #04060e;
     border-color: var(--primary);
@@ -924,11 +962,22 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 /* -- Activity Grid -------------------------------------- */
+.activity-card {
+    grid-column: span 3;
+    background: linear-gradient(135deg, rgba(255,204,51,0.05) 0%, transparent 100%);
+}
+
 .activity-card .a-header {
     font-size: 0.85rem;
     font-weight: 700;
     margin-bottom: 1rem;
     color: #ffcc33;
+}
+
+/* -- Pollen Card ---------------------------------------- */
+.pollen-card {
+    grid-column: span 3;
+    background: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.02) 100%);
 }
 
 .a-list {
@@ -1239,3 +1288,307 @@ body.snowing .frost-overlay {
     backdrop-filter: blur(2px);
 }
 
+/* -- Developer Section / Contact Form ------------------ */
+.sidebar {
+    scroll-behavior: smooth;
+}
+
+.developer-section {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.2) 100%);
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.developer-section:hover {
+    border-color: rgba(255, 204, 51, 0.2);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.dev-title {
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.dev-title i {
+    font-size: 1.3rem;
+}
+
+.dev-info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.dev-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    transition: color 0.2s ease;
+}
+
+.dev-info-item:hover {
+    color: var(--white);
+}
+
+.dev-info-item i {
+    color: var(--secondary);
+    font-size: 1.1rem;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.contact-form h4 {
+    font-size: 0.9rem;
+    color: var(--white);
+    margin-bottom: 0.2rem;
+    font-weight: 500;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    color: var(--white);
+    font-family: var(--font);
+    font-size: 0.85rem;
+    outline: none;
+    transition: all 0.2s ease;
+    resize: vertical;
+}
+
+.form-input::placeholder {
+    color: rgba(248, 250, 252, 0.3);
+}
+
+.form-input:focus {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(255, 204, 51, 0.15);
+}
+
+.form-submit-btn {
+    background: linear-gradient(135deg, var(--primary), var(--amber));
+    color: #040811;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-family: var(--font);
+}
+
+.form-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 204, 51, 0.3);
+}
+
+.dev-footer {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ═══ MAIN MAP AREA ═══ */
+.main-area {
+    position: relative;
+    flex: 1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.map-el {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Map Controls */
+.map-controls {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    z-index: 10;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.mctrl-btn {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--white);
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    font-family: var(--font);
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.mctrl-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 204, 51, 0.3);
+}
+
+.mctrl-btn.active {
+    background: rgba(255, 204, 51, 0.85);
+    color: #000;
+    border-color: #ffcc33;
+    box-shadow: 0 4px 20px rgba(255, 204, 51, 0.4);
+}
+
+/* Forecast Bottom Bar */
+.forecast-bar {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    padding: 1rem;
+    z-index: 10;
+    border-radius: 24px;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fbar-scroll {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.fbar-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.fbar-scroll::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+}
+
+.fbar-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+
+.fday-card {
+    min-width: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.fday-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 204, 51, 0.3);
+    transform: translateY(-5px);
+}
+
+.fday-card.today {
+    background: rgba(255, 204, 51, 0.1);
+    border-color: rgba(255, 204, 51, 0.3);
+}
+
+.fday-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.fday-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+}
+
+.fday-max {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--white);
+}
+
+.fday-min {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.fday-rain {
+    font-size: 0.75rem;
+    color: #60a5fa;
+    margin-top: 0.2rem;
+}
+
+/* Map specific tweaks */
+.leaflet-container {
+    background: transparent !important;
+}
+
+.leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+}
+
+.leaflet-control-zoom a {
+    background: rgba(15, 23, 42, 0.8) !important;
+    color: #ffcc33 !important;
+    border-color: rgba(255,255,255,0.1) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background: rgba(255,255,255,0.1) !important;
+}

@@ -57,6 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeTab       = 'temp';
     let isSoundOn       = false;
     let currentAudio    = null;
+    let useImperial     = false;
+    let lastLat         = null;
+    let lastLon         = null;
+    let lastCityName    = null;
 
     // ── Temperature-Based Themes ──────────────────────────
     function updateDynamicTheme(temp) {
@@ -381,8 +385,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ── Main load ─────────────────────────────────────────
+    // ── Main load (unified) ───────────────────────────────
     async function loadWeather(lat, lon, name) {
+        // Save coords for unit toggle reload
+        lastLat = lat; lastLon = lon; lastCityName = name;
+
         initialMsg.classList.add('hidden');
         weatherPanel.classList.remove('hidden');
         locationNameEl.textContent = name;
@@ -391,14 +398,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await api.getWeatherData(lat, lon, useImperial);
         if (!data) { alert('Failed to fetch weather data.'); return; }
 
-        // Fetch AQI
-        const aqiData = await api.getAirQuality(lat, lon);
+        // Fetch AQI & Pollen in parallel
+        const [aqiData] = await Promise.all([
+            api.getAirQuality(lat, lon),
+            updatePollen(lat, lon)
+        ]);
 
         const cur    = data.current;
         const daily  = data.daily;
         const hourly = data.hourly;
         dailyData    = daily;
         hourlyData   = hourly;
+
+        // Store for chatbot
+        window.lastWeatherData = data;
 
         // Clock
         updateClock(data.timezone);
@@ -412,7 +425,10 @@ document.addEventListener('DOMContentLoaded', () => {
         map.updateHeatmap(heatPoints);
 
         // Particles weather mode
-        if (typeof particles !== 'undefined') particles.setWeather(cur.weather_code);
+        particles.setWeather(cur.weather_code);
+
+        // Dynamic theme
+        updateDynamicTheme(cur.temperature_2m);
 
         // Hero card
         const unitS = useImperial ? '°F' : '°C';
@@ -443,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : `${cur.visibility} m`;
 
         const uv = daily.uv_index_max[0] ?? 0;
-        uvEl.textContent  = (+uv).toFixed(1);
+        uvEl.textContent    = (+uv).toFixed(1);
         uvNumEl.textContent = (+uv).toFixed(1);
         drawUVGauge(parseFloat(uv));
 
@@ -474,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Moon
         const moon = api.getMoonPhase(new Date());
         drawMoon(moon.phase);
-        moonNameEl.textContent = moon.name;
+        moonNameEl.textContent  = moon.name;
         moonIllumEl.textContent = `${moon.illumination}% illuminated`;
 
         // DNA Pills
@@ -489,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dnaPillsEl.appendChild(s);
         });
 
-        // Alerts
+        // Alerts (sidebar badges)
         alertsEl.innerHTML = '';
         const alerts = api.buildAlerts(cur, daily);
         if (alerts.length) {
@@ -501,6 +517,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 alertsEl.appendChild(el);
             });
         } else alertsEl.classList.add('hidden');
+
+        // Render alerts panel (detailed)
+        renderAlerts(alerts);
 
         // Chart
         renderChart(activeTab);
@@ -527,6 +546,20 @@ document.addEventListener('DOMContentLoaded', () => {
             initTilt(card);
             forecastBarInner.appendChild(card);
         });
+
+        // AI Narrative
+        updateNarrative(cur, daily, name);
+
+        // Activity Scores
+        renderActivities(cur, daily);
+
+        // Sky View
+        renderSkyView(lat, lon);
+
+        // Sound
+        weatherPanel.dataset.lastCode = cur.weather_code;
+        weatherPanel.dataset.lastCity = name;
+        if (isSoundOn) playAmbience(cur.weather_code);
     }
 
     // ── Search ────────────────────────────────────────────
@@ -559,36 +592,104 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.target.closest('.search-wrap')) searchResults.classList.add('hidden');
     });
 
-    // ── GPS ───────────────────────────────────────────────
-    function autoLocation() {
-        if (!navigator.geolocation) return;
-        navigator.geolocation.getCurrentPosition(
-            pos => loadWeather(pos.coords.latitude, pos.coords.longitude, 'Your Location'),
-            () => console.log('Location denied, waiting for search.')
-        );
+    // ── GPS / Location ────────────────────────────────────
+
+    // IP-based geolocation — works on file://, localhost, https
+    // Tries multiple services in order for reliability
+    async function ipGeolocate() {
+        const services = [
+            {
+                url: 'https://freeipapi.com/api/json/',
+                parse: d => d.latitude ? { lat: d.latitude, lon: d.longitude, city: d.cityName } : null
+            },
+            {
+                url: 'https://geolocation-db.com/json/',
+                parse: d => d.latitude ? { lat: d.latitude, lon: d.longitude, city: d.city } : null
+            },
+            {
+                url: 'https://api.ipify.org?format=json',
+                parse: async d => {
+                    if (!d.ip) return null;
+                    const r2 = await fetch(`https://freeipapi.com/api/json/${d.ip}`);
+                    const d2 = await r2.json();
+                    return d2.latitude ? { lat: d2.latitude, lon: d2.longitude, city: d2.cityName } : null;
+                }
+            }
+        ];
+        for (const svc of services) {
+            try {
+                const r = await fetch(svc.url);
+                if (!r.ok) continue;
+                const json = await r.json();
+                const result = typeof svc.parse === 'function' ? await svc.parse(json) : null;
+                if (result && result.lat && result.lon) return result;
+            } catch { /* try next */ }
+        }
+        return null;
+    }
+
+    // Real GPS via browser (Promise-based, with timeout)
+    function gpsLocate() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) { reject(new Error('not-supported')); return; }
+            navigator.geolocation.getCurrentPosition(
+                pos => resolve({
+                    lat: pos.coords.latitude,
+                    lon: pos.coords.longitude,
+                    city: 'Your Location'
+                }),
+                err => reject(err),
+                { timeout: 8000, maximumAge: 60000, enableHighAccuracy: false }
+            );
+        });
+    }
+
+    // Auto-load on page start: use IP geo (reliable everywhere)
+    async function autoLocation() {
+        try {
+            const loc = await ipGeolocate();
+            if (loc) loadWeather(loc.lat, loc.lon, loc.city || 'Your Location');
+        } catch { /* user can search manually */ }
     }
     autoLocation();
 
-    locationBtn.addEventListener('click', () => {
-        if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+    // GPS button: try real GPS first, fall back to IP
+    locationBtn.addEventListener('click', async () => {
         locationBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
-        navigator.geolocation.getCurrentPosition(
-            pos => {
+        try {
+            const loc = await gpsLocate();
+            locationBtn.innerHTML = "<i class='bx bx-current-location'></i>";
+            loadWeather(loc.lat, loc.lon, 'Your Location');
+        } catch {
+            // GPS failed — try IP fallback silently
+            try {
+                const loc = await ipGeolocate();
                 locationBtn.innerHTML = "<i class='bx bx-current-location'></i>";
-                loadWeather(pos.coords.latitude, pos.coords.longitude, 'Your Location');
-            },
-            () => {
+                if (loc) {
+                    loadWeather(loc.lat, loc.lon, loc.city || 'Your Location');
+                } else {
+                    alert('Could not detect your location. Please search for a city manually.');
+                }
+            } catch {
                 locationBtn.innerHTML = "<i class='bx bx-current-location'></i>";
-                alert('Location permission denied.');
+                alert('Could not detect your location. Please search for a city manually.');
             }
-        );
+        }
     });
+
 
     // ── Heatmap ───────────────────────────────────────────
     heatmapBtn.addEventListener('click', () => {
         heatmapOn = !heatmapOn;
         map.toggleHeatmap(heatmapOn);
         heatmapBtn.classList.toggle('active', heatmapOn);
+    });
+
+    // ── Radar ─────────────────────────────────────────────
+    radarBtn.addEventListener('click', () => {
+        radarOn = !radarOn;
+        map.toggleRadar(radarOn);
+        radarBtn.classList.toggle('active', radarOn);
     });
 
     // ── Soundscape ────────────────────────────────────────
@@ -656,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const astro = api.getAstroData(lat, lon);
         document.getElementById('moonIcon').className = `bx ${astro.moonIcon} sky-ico`;
         document.getElementById('moonPhase').textContent = astro.moonPhase;
-        document.getElementById('moonIllum').textContent = `${astro.moonIllum}% Illumination`;
+        document.getElementById('skyMoonIllum').textContent = `${astro.moonIllum}% Illumination`;
         document.getElementById('goldenHour').textContent = astro.goldenHour;
         document.getElementById('stargazing').textContent = astro.stargazing;
     }
@@ -693,25 +794,70 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('p-weed').textContent = Math.round(data.mugwort_pollen || data.ragweed_pollen || 0);
     }
 
-    // Update loadWeather to call these
-    const originalLoadWeather = loadWeather;
-    loadWeather = async (lat, lon, name) => {
-        const data = await originalLoadWeather(lat, lon, name);
-        if (data) {
-            window.lastWeatherData = data; // For Chatbot context
-            updateDynamicTheme(data.current.temperature_2m);
-            updateNarrative(data.current, data.daily, name);
-            renderActivities(data.current, data.daily);
-            updatePollen(lat, lon);
-            
-            const alerts = api.buildAlerts(data.current, data.daily);
-            renderAlerts(alerts);
-            renderSkyView(lat, lon);
-            weatherPanel.dataset.lastCode = data.current.weather_code;
-            weatherPanel.dataset.lastCity = name;
-            if (isSoundOn) playAmbience(data.current.weather_code);
-        }
-    };
+    // (loadWeather is now unified — no wrapper needed)
+
+    // ── Unit Switch Logic ─────────────────────────────────
+    const unitToggle = document.getElementById('unitToggle');
+    if (unitToggle) {
+        unitToggle.addEventListener('change', () => {
+            useImperial = unitToggle.checked;
+            if (lastLat !== null) {
+                loadWeather(lastLat, lastLon, lastCityName);
+            }
+        });
+    }
+
+    // ── AI Chatbot ────────────────────────────────────────
+    const chatToggle  = document.getElementById('chatToggle');
+    const chatWindow  = document.getElementById('chatWindow');
+    const closeChat   = document.getElementById('closeChat');
+    const chatInput   = document.getElementById('chatInput');
+    const sendChatBtn = document.getElementById('sendChat');
+    const chatMessages = document.getElementById('chatMessages');
+
+    function appendMsg(text, role) {
+        const div = document.createElement('div');
+        div.className = `msg ${role}`;
+        div.textContent = text;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function getBotReply(question) {
+        const q = question.toLowerCase();
+        const d = window.lastWeatherData;
+        if (!d) return "Please search for a city first so I can give you weather info!";
+        const cur = d.current;
+        const city = weatherPanel.dataset.lastCity || 'your city';
+        const info = api.getWeatherInfo(cur.weather_code);
+        if (q.includes('temp'))    return `It's currently ${Math.round(cur.temperature_2m)}° in ${city}. Feels like ${Math.round(cur.apparent_temperature)}°.`;
+        if (q.includes('rain') || q.includes('umbrella')) return cur.precipitation > 0 ? `Yes, it's raining in ${city}. Grab an umbrella!` : `No rain right now in ${city}. You're good to go!`;
+        if (q.includes('wind'))    return `Wind is blowing at ${cur.wind_speed_10m} km/h from ${api.degToCompass(cur.wind_direction_10m)}.`;
+        if (q.includes('humid'))   return `Humidity is at ${cur.relative_humidity_2m}%.`;
+        if (q.includes('wear') || q.includes('cloth')) return api.getClothingAdvice(cur.temperature_2m, cur.precipitation);
+        if (q.includes('uv'))      return `UV Index today is ${d.daily.uv_index_max[0]?.toFixed(1) ?? '--'}.`;
+        return `Right now in ${city}: ${info.desc}, ${Math.round(cur.temperature_2m)}°. Ask me about temperature, rain, wind, humidity, UV, or what to wear!`;
+    }
+
+    chatToggle.addEventListener('click', () => {
+        chatWindow.classList.toggle('active');
+    });
+
+    closeChat.addEventListener('click', () => {
+        chatWindow.classList.remove('active');
+    });
+
+    function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+        appendMsg(text, 'user');
+        chatInput.value = '';
+        setTimeout(() => appendMsg(getBotReply(text), 'bot'), 400);
+    }
+
+    sendChatBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
 });
 
 
@@ -730,7 +876,7 @@ function updateChronoGradient() {
         g1 = '#020617'; g2 = '#0f172a';
     }
 
-    document.body.style.background = \linear-gradient(135deg, \ 0%, \ 100%)\;
+    document.body.style.background = `linear-gradient(135deg, ${g1} 0%, ${g2} 100%)`;
 }
 
 // Update every minute
@@ -739,26 +885,5 @@ setInterval(updateChronoGradient, 60000);
 
 
 
-// -- Unit Switch Logic ---------------------------------
-const unitToggle = document.getElementById('unitToggle');
-let useImperial = false;
 
-unitToggle.addEventListener('change', () => {
-    useImperial = unitToggle.checked;
-    // Re-render everything with new units
-    if (window.lastWeatherData) {
-        const data = window.lastWeatherData;
-        const city = weatherPanel.dataset.lastCity;
-        // Re-trigger loadWeather with same coords but new global unit state
-        loadWeather(data.latitude, data.longitude, city);
-    }
-});
-
-function convertTemp(c) {
-    return useImperial ? Math.round((c * 9/5) + 32) : Math.round(c);
-}
-
-function convertSpeed(kmh) {
-    return useImperial ? Math.round(kmh * 0.621371) : Math.round(kmh);
-}
 
