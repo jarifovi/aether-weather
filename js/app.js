@@ -601,21 +601,16 @@ document.addEventListener('DOMContentLoaded', () => {
     async function ipGeolocate() {
         const services = [
             {
+                url: 'https://get.geojs.io/v1/ip/geo.json',
+                parse: d => d.latitude ? { lat: parseFloat(d.latitude), lon: parseFloat(d.longitude), city: d.city } : null
+            },
+            {
+                url: 'https://ipwho.is/',
+                parse: d => d.success ? { lat: d.latitude, lon: d.longitude, city: d.city } : null
+            },
+            {
                 url: 'https://freeipapi.com/api/json/',
                 parse: d => d.latitude ? { lat: d.latitude, lon: d.longitude, city: d.cityName } : null
-            },
-            {
-                url: 'https://geolocation-db.com/json/',
-                parse: d => d.latitude ? { lat: d.latitude, lon: d.longitude, city: d.city } : null
-            },
-            {
-                url: 'https://api.ipify.org?format=json',
-                parse: async d => {
-                    if (!d.ip) return null;
-                    const r2 = await fetch(`https://freeipapi.com/api/json/${d.ip}`);
-                    const d2 = await r2.json();
-                    return d2.latitude ? { lat: d2.latitude, lon: d2.longitude, city: d2.cityName } : null;
-                }
             }
         ];
         for (const svc of services) {
@@ -625,7 +620,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const json = await r.json();
                 const result = typeof svc.parse === 'function' ? await svc.parse(json) : null;
                 if (result && result.lat && result.lon) return result;
-            } catch { /* try next */ }
+            } catch (e) { 
+                console.warn('IP Geo failed for', svc.url, e); 
+            }
         }
         return null;
     }
